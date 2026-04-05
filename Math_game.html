@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>靈感金句抽籤器</title>
+    <style>
+        body {
+            font-family: 'PingFang HK', 'Microsoft JhengHei', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+        }
+        h1 { color: #333; margin-bottom: 1.5rem; }
+        #quote-display {
+            font-size: 1.5rem;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #555;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border-left: 5px solid #007AFF;
+            background: #f9f9f9;
+        }
+        .controls { display: flex; flex-direction: column; gap: 1rem; }
+        button {
+            padding: 12px 24px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+        }
+        .btn-main { background-color: #007AFF; color: white; font-weight: bold; }
+        .btn-main:hover { background-color: #0056b3; transform: scale(1.02); }
+        .add-section {
+            margin-top: 2rem;
+            border-top: 1px solid #eee;
+            padding-top: 1.5rem;
+        }
+        input {
+            width: 70%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+        }
+        .btn-add { background-color: #34C759; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>✨ 靈感抽籤機</h1>
+    <div id="quote-display">點擊下方按鈕開始</div>
+    
+    <div class="controls">
+        <button class="btn-main" onclick="getRandomQuote()">隨機抽取一個字句</button>
+    </div>
+
+    <div class="add-section">
+        <input type="text" id="new-quote" placeholder="輸入你想加入的新字句...">
+        <button class="btn-add" onclick="addNewQuote()">新增</button>
+    </div>
+</div>
+
+<script>
+    // 初始字句庫
+    let quotes = [
+        "今天的努力，是為了明天更好的自己。",
+        "簡單的事情重複做，你就是專家。",
+        "不要去等待機會，而要創造機會。",
+        "細節決定成敗。"
+    ];
+
+    const display = document.getElementById('quote-display');
+    const input = document.getElementById('new-quote');
+
+    // 隨機抽取功能
+    function getRandomQuote() {
+        const randomIndex = Math.floor(Math.random() * quotes.length);
+        display.style.opacity = 0;
+        setTimeout(() => {
+            display.innerText = quotes[randomIndex];
+            display.style.opacity = 1;
+        }, 200);
+    }
+
+    // 新增字句功能
+    function addNewQuote() {
+        const text = input.value.trim();
+        if (text) {
+            quotes.push(text);
+            alert("成功加入新字句！目前庫內共有 " + quotes.length + " 條字句。");
+            input.value = ""; // 清空輸入框
+        } else {
+            alert("請先輸入文字喔！");
+        }
+    }
+</script>
+
+</body>
+</html>
