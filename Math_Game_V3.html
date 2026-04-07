@@ -1,0 +1,436 @@
+```html
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Theo 數棒挑戰 - 啟蒙教學版</title>
+    <style>
+        :root {
+            /* 古氏數棒顏色定義 */
+            --c1: #FFFFFF; --c2: #FF0000; --c3: #7CFC00; --c4: #8A2BE2; 
+            --c5: #FFEE00; --c6: #00C957; --c7: #000000; --c8: #A52A2A; 
+            --c9: #1E90FF; --c10: #FF8C00;
+            --u: min(8.5vw, 35px); 
+        }
+        
+        body { 
+            font-family: 'PingFang HK', 'Helvetica Neue', sans-serif; 
+            background-color: #E8F5E9; margin: 0; padding: 5px;
+            display: flex; flex-direction: column; align-items: center; 
+            height: 100vh; height: -webkit-fill-available;
+            overflow: hidden;
+            touch-action: manipulation;
+            user-select: none;
+            box-sizing: border-box;
+        }
+
+        /* 開始遊戲覆蓋層 */
+        #start-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #2E7D32; z-index: 200; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; color: white;
+        }
+
+        .status-bar {
+            width: 100%; max-width: 450px; display: flex; justify-content: space-between;
+            align-items: center; background: #2E7D32; color: white;
+            padding: 8px 15px; border-radius: 10px; margin-bottom: 5px; box-sizing: border-box;
+            font-weight: bold; font-size: 0.9rem; flex-shrink: 0;
+        }
+
+        .header { text-align: center; width: 100%; max-width: 450px; flex-shrink: 0; }
+        .title { font-size: 1.2rem; color: #1B5E20; font-weight: bold; margin: 2px 0; }
+        #message { height: 28px; font-size: 1rem; font-weight: bold; color: #2E7D32; display: flex; align-items: center; justify-content: center; padding: 0 10px; }
+        
+        .tutorial-trigger {
+            background: #FB8C00; color: white; border: none; padding: 4px 12px;
+            border-radius: 15px; font-size: 0.8rem; cursor: pointer; margin-bottom: 5px;
+            font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .tutorial-box {
+            display: none; width: 100%; max-width: 450px; background: #FFFDE7;
+            padding: 8px; border-radius: 10px; border: 2px dashed #FDD835;
+            margin-bottom: 8px; box-sizing: border-box;
+        }
+
+        .play-area { 
+            background: white; width: 100%; max-width: 450px; padding: 12px; 
+            border-radius: 15px; border: 3px solid #A5D6A7; box-sizing: border-box;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        
+        .rod { 
+            height: 45px; border-radius: 6px; border: 2px solid #333; 
+            display: inline-flex; align-items: center; justify-content: center; 
+            font-weight: 900; font-size: 20px; box-sizing: border-box;
+            box-shadow: inset 0 -4px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.45, 0.05, 0.55, 0.95), opacity 0.3s;
+            flex-shrink: 0;
+            z-index: 5;
+        }
+        
+        .ruler-bg {
+            background-image: linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px);
+            background-size: var(--u) 100%;
+        }
+
+        .question-zone { 
+            background: #F1F8E9; border-radius: 12px; padding: 12px;
+            display: flex; flex-direction: column; gap: 20px;
+            border: 1px solid #C8E6C9;
+            position: relative;
+            margin-top: 10px;
+        }
+
+        .row { display: flex; align-items: center; gap: 5px; width: 100%; min-height: 50px; position: relative; }
+        .symbol { font-size: 24px; font-weight: bold; color: #666; min-width: 25px; text-align: center; transition: opacity 0.3s; }
+
+        .options-zone { 
+            display: flex;
+            flex-direction: column;
+            gap: 8px; 
+            width: 100%;
+            flex: 1;
+            justify-content: center;
+            padding-top: 10px;
+        }
+        
+        .option-btn { 
+            background: #FFF; border: 2px solid #F0F0F0; border-radius: 12px; 
+            padding: 5px 15px; display: flex; justify-content: flex-start; align-items: center;
+            min-height: 55px; cursor: pointer; touch-action: manipulation;
+            box-shadow: 0 3px 0 #EEE;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        .option-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #EEE; border-color: #4CAF50; }
+
+        .rod-1 { width: calc(var(--u) * 1); background-color: var(--c1) !important; color: #333 !important; }
+        .rod-2 { width: calc(var(--u) * 2); background-color: var(--c2) !important; color: white !important; }
+        .rod-3 { width: calc(var(--u) * 3); background-color: var(--c3) !important; color: #333 !important; }
+        .rod-4 { width: calc(var(--u) * 4); background-color: var(--c4) !important; color: white !important; }
+        .rod-5 { width: calc(var(--u) * 5); background-color: var(--c5) !important; color: #333 !important; }
+        .rod-6 { width: calc(var(--u) * 6); background-color: var(--c6) !important; color: white !important; }
+        .rod-7 { width: calc(var(--u) * 7); background-color: var(--c7) !important; color: white !important; }
+        .rod-8 { width: calc(var(--u) * 8); background-color: var(--c8) !important; color: white !important; }
+        .rod-9 { width: calc(var(--u) * 9); background-color: var(--c9) !important; color: white !important; }
+        .rod-10 { width: calc(var(--u) * 10); background-color: var(--c10) !important; color: white !important; }
+
+        #target-slot { 
+            background-color: rgba(0,0,0,0.03); border: 2px dashed #CCC; 
+            height: 45px; border-radius: 6px; box-sizing: border-box;
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: all 0.3s;
+            position: relative;
+            z-index: 1;
+        }
+
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); display: none; 
+            justify-content: center; align-items: center; z-index: 100;
+            backdrop-filter: blur(4px);
+        }
+        .modal-content {
+            background: white; padding: 30px; border-radius: 25px;
+            width: 85%; max-width: 350px; text-align: center;
+        }
+        .btn-main {
+            background: #4CAF50; color: white; border: none; padding: 15px;
+            border-radius: 30px; font-size: 1.2rem; font-weight: bold; width: 100%; margin-top: 15px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div id="start-overlay">
+    <h1 style="font-size: 1.8rem; margin-bottom: 20px;">Theo 數棒挑戰</h1>
+    <button class="btn-main" style="width: 200px;" onclick="startGameFirstTime()">點擊開始 🔊</button>
+    <p style="margin-top: 15px; font-size: 0.9rem; opacity: 0.8;">請確保音量已開啟</p>
+</div>
+
+<div class="status-bar">
+    <span id="progress-text">第 1 / 10 題</span>
+    <span>🌟 <span id="score-correct">0</span></span>
+</div>
+
+<div class="header">
+    <p class="title">Theo 數棒挑戰</p>
+    <button class="tutorial-trigger" onclick="toggleTutorial()">💡 溫習長度參考</button>
+    <div id="tutorial" class="tutorial-box">
+        <div id="tutorial-grid" style="display: flex; flex-wrap: wrap; gap: 5px; justify-content: center;"></div>
+    </div>
+    <div id="message"></div>
+</div>
+
+<div class="play-area">
+    <div class="question-zone" id="question-zone">
+        <div class="row ruler-bg" id="row-top" style="border-bottom: 2px dashed #E8F5E9; padding-bottom: 12px;">
+            <div id="q-rod-1" class="rod"></div>
+            <div id="q-sym-plus" class="symbol">+</div>
+            <div id="q-rod-2" class="rod"></div>
+        </div>
+        <div class="row ruler-bg" id="row-bottom">
+            <div class="symbol" id="q-sym-equal">=</div>
+            <div id="target-slot"></div>
+        </div>
+    </div>
+    <div class="options-zone" id="options"></div>
+</div>
+
+<div class="modal" id="result-modal">
+    <div class="modal-content">
+        <h2 id="result-title" style="color: #2E7D32; margin: 0; font-size: 1.5rem;">挑戰完成！</h2>
+        <p id="result-detail" style="font-size: 1.1rem; margin: 20px 0; line-height: 1.5;"></p>
+        <button class="btn-main" onclick="startNewGame(false)">再玩一次</button>
+        <button id="review-btn" class="btn-main" onclick="startNewGame(true)" style="display: none; background: #FF5722;">溫習錯題</button>
+    </div>
+</div>
+
+<script>
+    let currentAnswer = 0;
+    let isLocked = false;
+    let questionCount = 0;
+    let correctCount = 0;
+    let wrongQuestions = [];
+    let isReviewMode = false;
+    let reviewQueue = [];
+
+    const rodInfo = {
+        1: { name: "白色", color: "var(--c1)" },
+        2: { name: "紅色", color: "var(--c2)" },
+        3: { name: "淺綠色", color: "var(--c3)" },
+        4: { name: "紫色", color: "var(--c4)" },
+        5: { name: "黃色", color: "var(--c5)" },
+        6: { name: "深綠色", color: "var(--c6)" },
+        7: { name: "黑色", color: "var(--c7)" },
+        8: { name: "咖啡色", color: "var(--c8)" },
+        9: { name: "藍色", color: "var(--c9)" },
+        10: { name: "橘色", color: "var(--c10)" }
+    };
+
+    // 建立教學圖例
+    const grid = document.getElementById('tutorial-grid');
+    Object.keys(rodInfo).forEach(val => {
+        const div = document.createElement('div');
+        div.style.cssText = `width: 25px; height: 20px; font-size: 10px; border: 1.5px solid #333; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-weight: bold; background-color: ${rodInfo[val].color}; color: ${[1,3,5].includes(parseInt(val)) ? '#333' : '#fff'}`;
+        div.innerText = val;
+        grid.appendChild(div);
+    });
+
+    function toggleTutorial() {
+        const box = document.getElementById('tutorial');
+        box.style.display = box.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function startGameFirstTime() {
+        document.getElementById('start-overlay').style.display = 'none';
+        speak("", () => {
+            initGame();
+        });
+    }
+
+    function initGame() {
+        if ((questionCount >= 10 && !isReviewMode) || (isReviewMode && reviewQueue.length === 0)) {
+            showSummary(); return;
+        }
+
+        isLocked = false;
+        
+        let n1, n2;
+        if (isReviewMode) {
+            const q = reviewQueue.shift(); n1 = q.n1; n2 = q.n2;
+            document.getElementById('progress-text').innerText = `溫習剩餘 ${reviewQueue.length + 1} 題`;
+        } else {
+            questionCount++;
+            document.getElementById('progress-text').innerText = `第 ${questionCount} / 10 題`;
+            n1 = Math.floor(Math.random() * 5) + 1;
+            n2 = Math.floor(Math.random() * 4) + 1; 
+        }
+        currentAnswer = n1 + n2;
+
+        const r1 = document.getElementById('q-rod-1');
+        const r2 = document.getElementById('q-rod-2');
+        const slot = document.getElementById('target-slot');
+        const plus = document.getElementById('q-sym-plus');
+        const equal = document.getElementById('q-sym-equal');
+        
+        r1.className = `rod rod-${n1}`; r1.innerText = n1; r1.style.opacity = "1"; r1.style.transform = "none";
+        r2.className = `rod rod-${n2}`; r2.innerText = n2; r2.style.opacity = "1"; r2.style.transform = "none";
+        plus.style.opacity = "1";
+        equal.style.opacity = "1";
+        
+        slot.className = ""; slot.innerText = ""; slot.id = "target-slot";
+        slot.style.width = `calc(var(--u) * ${currentAnswer})`;
+        slot.style.opacity = "1";
+
+        document.getElementById('message').innerText = `題目：${rodInfo[n1].name}加${rodInfo[n2].name}`;
+        
+        // 讀出題目
+        speak(`${rodInfo[n1].name}${n1}，加埋${rodInfo[n2].name}${n2}，係等於幾多呢？`);
+
+        let answers = [currentAnswer];
+        while(answers.length < 4) {
+            let wrong = Math.floor(Math.random() * 9) + 1;
+            if(!answers.includes(wrong)) answers.push(wrong);
+        }
+        answers.sort((a, b) => a - b);
+
+        const oZone = document.getElementById('options');
+        oZone.innerHTML = "";
+        answers.forEach(val => {
+            const btn = document.createElement('div');
+            btn.className = 'option-btn';
+            btn.innerHTML = `<div class="rod rod-${val}">${val}</div>`;
+            btn.onclick = (e) => checkAnswer(val, n1, n2, e);
+            oZone.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(val, n1, n2, event) {
+        if (isLocked) return;
+        const msg = document.getElementById('message');
+        const slot = document.getElementById('target-slot');
+        const r1 = document.getElementById('q-rod-1');
+        const r2 = document.getElementById('q-rod-2');
+        const plus = document.getElementById('q-sym-plus');
+        const equal = document.getElementById('q-sym-equal');
+
+        if (val === currentAnswer) {
+            isLocked = true;
+            if (!isReviewMode) correctCount++;
+            document.getElementById('score-correct').innerText = correctCount;
+            msg.innerText = "答對了！睇下佢哋幾長！";
+            
+            plus.style.opacity = "0";
+            
+            // 1. 並合動畫
+            const r1Rect = r1.getBoundingClientRect();
+            const r2Rect = r2.getBoundingClientRect();
+            const gap = r2Rect.left - r1Rect.right;
+            r2.style.transform = `translateX(${-gap}px)`;
+
+            // 2. 移動到空格正上方停留對比
+            setTimeout(() => {
+                const sRect = slot.getBoundingClientRect();
+                const currentR1Rect = r1.getBoundingClientRect();
+                
+                const dyCompare = sRect.top - currentR1Rect.top - 12; 
+                const dx = sRect.left - currentR1Rect.left;
+
+                r1.style.transform = `translate(${dx}px, ${dyCompare}px)`;
+                r2.style.transform = `translate(${dx - gap}px, ${dyCompare}px)`;
+                equal.style.opacity = "0";
+
+                // 3. 停留後正式落入空格
+                setTimeout(() => {
+                    const finalDy = sRect.top - currentR1Rect.top;
+                    r1.style.transform = `translate(${dx}px, ${finalDy}px)`;
+                    r2.style.transform = `translate(${dx - gap}px, ${finalDy}px)`;
+                    
+                    const handleNext = () => {
+                        slot.innerText = val; 
+                        slot.className = `rod rod-${val}`;
+                        slot.style.color = [1,3,5].includes(val) ? "#333" : "white";
+                        r1.style.opacity = "0";
+                        r2.style.opacity = "0";
+                        
+                        const text = `答啱喇！你睇下，${rodInfo[n1].name}${n1} 加埋 ${rodInfo[n2].name}${n2}，長度啱啱好等於 ${rodInfo[val].name}${val} 呀！`;
+                        
+                        let hasAdvanced = false;
+                        const advance = () => {
+                            if (hasAdvanced) return;
+                            hasAdvanced = true;
+                            // --- 調整重點：等待更長時間再跳轉 (從 1000 延長到 3000ms) ---
+                            setTimeout(initGame, 3000); 
+                        };
+
+                        speak(text, advance);
+                        // --- 調整重點：對話後的總安全等待時間延長 (從 4000 延長到 7000ms) ---
+                        setTimeout(advance, 7000); 
+                    };
+
+                    setTimeout(handleNext, 600);
+                }, 1500); 
+
+            }, 700);
+
+        } else {
+            if (!isReviewMode && !wrongQuestions.some(q => q.n1 === n1 && q.n2 === n2)) wrongQuestions.push({n1, n2});
+            msg.innerText = `唔係${rodInfo[val].name}呀，長度唔夾喎！`;
+            speak(`唔係${rodInfo[val].name}嘅${val}呀，你再比對下長度？`);
+            event.currentTarget.style.borderColor = "#FF5252";
+            setTimeout(() => event.currentTarget.style.borderColor = "#F0F0F0", 600);
+        }
+    }
+
+    function showSummary() {
+        const modal = document.getElementById('result-modal');
+        modal.style.display = 'flex';
+        const detail = document.getElementById('result-detail');
+        const revBtn = document.getElementById('review-btn');
+        if (isReviewMode) {
+            detail.innerText = "Theo 太棒了！全部學識喇！"; revBtn.style.display = 'none';
+        } else {
+            detail.innerHTML = `Theo 挑戰成功！<br>獲得了 ${correctCount} 顆星星！`;
+            revBtn.style.display = wrongQuestions.length > 0 ? 'block' : 'none';
+        }
+        speak(isReviewMode ? "Theo你好叻呀，全部識晒喇！" : `挑戰完畢，Theo攞到${correctCount}粒星呀，真係好叻！`);
+    }
+
+    function startNewGame(review) {
+        document.getElementById('result-modal').style.display = 'none';
+        if (review) { isReviewMode = true; reviewQueue = [...wrongQuestions]; } 
+        else { isReviewMode = false; questionCount = 0; correctCount = 0; wrongQuestions = []; document.getElementById('score-correct').innerText = "0"; }
+        initGame();
+    }
+
+    function speak(t, onEnd) {
+        if (!window.speechSynthesis) { if (onEnd) onEnd(); return; }
+        
+        window.speechSynthesis.cancel();
+        
+        if (t === "") {
+            const silent = new SpeechSynthesisUtterance(" ");
+            silent.volume = 0;
+            silent.onend = onEnd;
+            window.speechSynthesis.speak(silent);
+            return;
+        }
+
+        const m = new SpeechSynthesisUtterance(t);
+        const voices = window.speechSynthesis.getVoices();
+        
+        let voice = voices.find(v => v.lang.includes('HK') || v.lang.includes('MO') || v.lang.includes('zh-CAN'));
+        if (voice) m.voice = voice;
+        m.lang = 'zh-HK';
+        m.rate = 1.05; 
+        m.pitch = 1.1; 
+
+        m.onend = () => { if (onEnd) onEnd(); };
+        m.onerror = (e) => { 
+            console.error("Speech Error:", e);
+            if (onEnd) onEnd(); 
+        };
+        
+        window.speechSynthesis.speak(m);
+    }
+
+    if (window.speechSynthesis) {
+        window.speechSynthesis.getVoices();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+        }
+    }
+</script>
+</body>
+</html>
+
+```
